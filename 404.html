@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+        }
+
+        .video-background video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.8;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 998;
+        }
+
+        .modal {
+            background: rgba(255, 255, 255, 0.6);
+            padding: 40px 60px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 500px;
+            width: 90%;
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal h1 {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .modal p {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .home-button {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(45deg, rgb(242, 162, 160), rgb(220, 140, 138));
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(242, 162, 160, 0.4);
+            cursor: pointer;
+            border: none;
+        }
+
+        .home-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(242, 162, 160, 0.6);
+            background: linear-gradient(45deg, rgb(220, 140, 138), rgb(242, 162, 160));
+        }
+
+        .home-button:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 10px rgba(242, 162, 160, 0.4);
+        }
+
+        /* 幕布遮罩 */
+        .curtain-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            z-index: 999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 1.5s ease;
+        }
+
+        .curtain-overlay.hidden {
+            transform: translateY(-100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .click-hint {
+            color: white;
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 
+                         0 0 40px rgba(255, 255, 255, 0.6),
+                         0 0 60px rgba(255, 255, 255, 0.4),
+                         0 0 80px rgba(255, 255, 255, 0.2);
+            animation: glowPulse 2s infinite ease-in-out;
+            user-select: none;
+            position: relative;
+        }
+
+        @keyframes glowPulse {
+            0% {
+                opacity: 0.7;
+                transform: scale(1);
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 
+                             0 0 20px rgba(255, 255, 255, 0.3),
+                             0 0 30px rgba(255, 255, 255, 0.2);
+            }
+            25% {
+                opacity: 0.9;
+                transform: scale(1.02);
+                text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 
+                             0 0 40px rgba(255, 255, 255, 0.6),
+                             0 0 60px rgba(255, 255, 255, 0.4);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+                text-shadow: 0 0 30px rgba(255, 255, 255, 1), 
+                             0 0 60px rgba(255, 255, 255, 0.8),
+                             0 0 90px rgba(255, 255, 255, 0.6),
+                             0 0 120px rgba(255, 255, 255, 0.4);
+            }
+            75% {
+                opacity: 0.9;
+                transform: scale(1.02);
+                text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 
+                             0 0 40px rgba(255, 255, 255, 0.6),
+                             0 0 60px rgba(255, 255, 255, 0.4);
+            }
+            100% {
+                opacity: 0.7;
+                transform: scale(1);
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 
+                             0 0 20px rgba(255, 255, 255, 0.3),
+                             0 0 30px rgba(255, 255, 255, 0.2);
+            }
+        }
+
+        /* 添加霓虹灯效果 */
+        .click-hint::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 20px;
+            animation: halo 3s infinite ease-in-out;
+            z-index: -1;
+        }
+
+        @keyframes halo {
+            0%, 100% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            50% {
+                opacity: 0.3;
+                transform: scale(1.2);
+            }
+        }
+
+        /* 添加打字机光标效果 */
+        .click-hint::after {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 1em;
+            background: white;
+            margin-left: 8px;
+            animation: cursor 1s infinite step-end;
+        }
+
+        @keyframes cursor {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .click-hint {
+                font-size: 2.5rem;
+                padding: 0 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .click-hint {
+                font-size: 2rem;
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 600px) {
+            .modal {
+                padding: 30px 40px;
+            }
+            
+            .modal h1 {
+                font-size: 2rem;
+            }
+            
+            .modal p {
+                font-size: 1rem;
+            }
+            
+            .home-button {
+                padding: 12px 25px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 幕布遮罩 -->
+    <div class="curtain-overlay" id="curtainOverlay" onclick="openCurtain()">
+        <div class="click-hint">点击任意位置继续...</div>
+    </div>
+
+    <!-- 全屏视频背景 -->
+    <div class="video-background">
+        <video id="rickRollVideo">
+            <source src="roll.mp4" type="video/mp4">
+            您的浏览器不支持视频播放。
+        </video>
+    </div>
+
+    <!-- 模态框覆盖层 -->
+    <div class="modal-overlay">
+        <div class="modal">
+            <h1>抱歉, 页面不存在</h1>
+            <p>更抱歉的是您被 Rick Roll 了 (๑˃̵ᴗ˂̵)</p>
+            <button class="home-button" onclick="goHome()">返回主页</button>
+        </div>
+    </div>
+
+    <script>
+        let videoCanAutoplay = false;
+        const video = document.getElementById('rickRollVideo');
+        const curtain = document.getElementById('curtainOverlay');
+
+        function goHome() {
+            // 获取当前域名并返回根目录
+            const currentDomain = window.location.protocol + '//' + window.location.host;
+            window.location.href = currentDomain;
+        }
+
+        function openCurtain() {
+            // 拉开幕布动画
+            curtain.classList.add('hidden');
+            
+            // 动画完成后开始播放视频
+            setTimeout(() => {
+                video.play().catch(error => {
+                    console.log('Video play failed:', error);
+                });
+                curtain.style.display = 'none';
+            }, 1500);
+        }
+
+        // 检测是否能自动播放
+        document.addEventListener('DOMContentLoaded', function() {
+            // 先暂停视频，避免自动播放
+            video.pause();
+            
+            // 尝试自动播放视频
+            const playPromise = video.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    // 自动播放成功，隐藏幕布
+                    videoCanAutoplay = true;
+                    setTimeout(() => {
+                        curtain.classList.add('hidden');
+                        setTimeout(() => {
+                            curtain.style.display = 'none';
+                        }, 1500);
+                    }, 100);
+                }).catch(error => {
+                    // 自动播放失败，显示幕布
+                    console.log('Autoplay prevented:', error);
+                    videoCanAutoplay = false;
+                    curtain.style.display = 'flex';
+                });
+            } else {
+                // 没有返回 Promise，说明可能不支持自动播放
+                curtain.style.display = 'flex';
+            }
+        });
+
+        // 监听用户交互，如果视频还没播放就尝试播放
+        document.addEventListener('click', function(e) {
+            if (!videoCanAutoplay && video.paused) {
+                video.play().catch(error => {
+                    console.log('Video play failed:', error);
+                });
+            }
+        });
+
+        // 监听视频播放结束事件
+        video.addEventListener('ended', function() {
+            // 视频播放完成后自动返回主页
+            setTimeout(() => {
+                goHome();
+            }, 1000); // 延迟1秒后跳转，让用户看到视频结束
+        });
+    </script>
+</body>
+</html>
